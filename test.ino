@@ -14,13 +14,19 @@
 #define SWITCH_4_PIN 18
 
 // Hardcoded MAC address of the gateway
-uint8_t gatewayMacAddress[] = {0x34, 0x85, 0x18, 0x17, 0xF6, 0x68}; 
+uint8_t gatewayMacAddress[] = {0x24, 0x6F, 0x28, 0x01, 0x02, 0x03};
 
 // Structure to receive data
 typedef struct {
   uint8_t relayNumber; // Relay number (1, 2, 3, or 4)
   uint8_t state;       // 0 = OFF, 1 = ON
 } RelayCommand;
+
+// Variables to track relay control mode
+bool relay1ManualControl = true;
+bool relay2ManualControl = true;
+bool relay3ManualControl = true;
+bool relay4ManualControl = true;
 
 // Callback when data is received
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
@@ -37,19 +43,23 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
     snprintf(logMessage, sizeof(logMessage), "Relay %d set to %s", command.relayNumber, command.state ? "ON" : "OFF");
     Serial.println(logMessage);
 
-    // Control the relay
+    // Control the relay and disable manual control for this relay
     switch (command.relayNumber) {
       case 1:
         digitalWrite(RELAY_1_PIN, command.state);
+        relay1ManualControl = false; // Disable manual control
         break;
       case 2:
         digitalWrite(RELAY_2_PIN, command.state);
+        relay2ManualControl = false; // Disable manual control
         break;
       case 3:
         digitalWrite(RELAY_3_PIN, command.state);
+        relay3ManualControl = false; // Disable manual control
         break;
       case 4:
         digitalWrite(RELAY_4_PIN, command.state);
+        relay4ManualControl = false; // Disable manual control
         break;
       default:
         Serial.println("Invalid relay number!");
@@ -100,29 +110,37 @@ void setup() {
 }
 
 void loop() {
-  // Read switch states and control relays
-  if (digitalRead(SWITCH_1_PIN) == LOW) { // Switch 1 pressed (active low)
-    digitalWrite(RELAY_1_PIN, HIGH); // Turn on Relay 1
-  } else {
-    digitalWrite(RELAY_1_PIN, LOW); // Turn off Relay 1
+  // Read switch states and control relays (if manual control is enabled)
+  if (relay1ManualControl) {
+    if (digitalRead(SWITCH_1_PIN) == LOW) { // Switch 1 pressed (active low)
+      digitalWrite(RELAY_1_PIN, HIGH); // Turn on Relay 1
+    } else {
+      digitalWrite(RELAY_1_PIN, LOW); // Turn off Relay 1
+    }
   }
 
-  if (digitalRead(SWITCH_2_PIN) == LOW) { // Switch 2 pressed (active low)
-    digitalWrite(RELAY_2_PIN, HIGH); // Turn on Relay 2
-  } else {
-    digitalWrite(RELAY_2_PIN, LOW); // Turn off Relay 2
+  if (relay2ManualControl) {
+    if (digitalRead(SWITCH_2_PIN) == LOW) { // Switch 2 pressed (active low)
+      digitalWrite(RELAY_2_PIN, HIGH); // Turn on Relay 2
+    } else {
+      digitalWrite(RELAY_2_PIN, LOW); // Turn off Relay 2
+    }
   }
 
-  if (digitalRead(SWITCH_3_PIN) == LOW) { // Switch 3 pressed (active low)
-    digitalWrite(RELAY_3_PIN, HIGH); // Turn on Relay 3
-  } else {
-    digitalWrite(RELAY_3_PIN, LOW); // Turn off Relay 3
+  if (relay3ManualControl) {
+    if (digitalRead(SWITCH_3_PIN) == LOW) { // Switch 3 pressed (active low)
+      digitalWrite(RELAY_3_PIN, HIGH); // Turn on Relay 3
+    } else {
+      digitalWrite(RELAY_3_PIN, LOW); // Turn off Relay 3
+    }
   }
 
-  if (digitalRead(SWITCH_4_PIN) == LOW) { // Switch 4 pressed (active low)
-    digitalWrite(RELAY_4_PIN, HIGH); // Turn on Relay 4
-  } else {
-    digitalWrite(RELAY_4_PIN, LOW); // Turn off Relay 4
+  if (relay4ManualControl) {
+    if (digitalRead(SWITCH_4_PIN) == LOW) { // Switch 4 pressed (active low)
+      digitalWrite(RELAY_4_PIN, HIGH); // Turn on Relay 4
+    } else {
+      digitalWrite(RELAY_4_PIN, LOW); // Turn off Relay 4
+    }
   }
 
   // Small delay to debounce switches
