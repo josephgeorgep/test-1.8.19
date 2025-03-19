@@ -1,19 +1,60 @@
+#include <esp_now.h>
+#include <WiFi.h>
+
 // Define relay pins
 #define RELAY_1_PIN 3
 #define RELAY_2_PIN 10
 #define RELAY_3_PIN 19
 #define RELAY_4_PIN 5
 
-// Define switch pins
-#define SWITCH_1_PIN 2
-#define SWITCH_2_PIN 6
-#define SWITCH_3_PIN 4
-#define SWITCH_4_PIN 18
+// Structure to receive data
+typedef struct {
+  uint8_t relayNumber; // Relay number (1, 2, 3, or 4)
+  uint8_t state;       // 0 = OFF, 1 = ON
+} RelayCommand;
+
+// Callback when data is received
+void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
+  char logMessage[50];
+  snprintf(logMessage, sizeof(logMessage), "Received data from %02X:%02X:%02X:%02X:%02X:%02X",
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  Serial.println(logMessage);
+
+  if (len == sizeof(RelayCommand)) {
+    RelayCommand command;
+    memcpy(&command, incomingData, sizeof(command));
+
+    // Log the received command
+    snprintf(logMessage, sizeof(logMessage), "Relay %d set to %s", command.relayNumber, command.state ? "ON" : "OFF");
+    Serial.println(logMessage);
+
+    // Control the relay
+    switch (command.relayNumber) {
+      case 1:
+        digitalWrite(RELAY_1_PIN, command.state);
+        break;
+      case 2:
+        digitalWrite(RELAY_2_PIN, command.state);
+        break;
+      case 3:
+        digitalWrite(RELAY_3_PIN, command.state);
+        break;
+      case 4:
+        digitalWrite(RELAY_4_PIN, command.state);
+        break;
+      default:
+        Serial.println("Invalid relay number!");
+        break;
+    }
+  } else {
+    Serial.println("Invalid data length received!");
+  }
+}
 
 void setup() {
   // Initialize Serial for logging
   Serial.begin(115200);
-  Serial.println("Testing Manual Switches...");
+  Serial.println("Testing ESP-NOW...");
 
   // Initialize relay pins
   pinMode(RELAY_1_PIN, OUTPUT);
@@ -25,46 +66,23 @@ void setup() {
   digitalWrite(RELAY_3_PIN, LOW);
   digitalWrite(RELAY_4_PIN, LOW);
 
-  // Initialize switch pins
-  pinMode(SWITCH_1_PIN, INPUT_PULLUP);
-  pinMode(SWITCH_2_PIN, INPUT_PULLUP);
-  pinMode(SWITCH_3_PIN, INPUT_PULLUP);
-  pinMode(SWITCH_4_PIN, INPUT_PULLUP);
+  // Initialize WiFi in STA mode
+  WiFi.mode(WIFI_STA);
+  Serial.print("Relay Controller MAC: ");
+  Serial.println(WiFi.macAddress());
+
+  // Initialize ESP-NOW
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+
+  // Register callback for receiving data
+  esp_now_register_recv_cb(OnDataRecv);
+
+  Serial.println("ESP-NOW Ready!");
 }
 
 void loop() {
-  // Read switch states and control relays
-  if (digitalRead(SWITCH_1_PIN) == LOW) { // Switch 1 pressed (active low)
-    digitalWrite(RELAY_1_PIN, HIGH); // Turn on Relay 1
-    Serial.println("Switch 1 pressed: Relay 1 ON");
-  } else {
-    digitalWrite(RELAY_1_PIN, LOW); // Turn off Relay 1
-    Serial.println("Switch 1 released: Relay 1 OFF");
-  }
-
-  if (digitalRead(SWITCH_2_PIN) == LOW) { // Switch 2 pressed (active low)
-    digitalWrite(RELAY_2_PIN, HIGH); // Turn on Relay 2
-    Serial.println("Switch 2 pressed: Relay 2 ON");
-  } else {
-    digitalWrite(RELAY_2_PIN, LOW); // Turn off Relay 2
-    Serial.println("Switch 2 released: Relay 2 OFF");
-  }
-
-  if (digitalRead(SWITCH_3_PIN) == LOW) { // Switch 3 pressed (active low)
-    digitalWrite(RELAY_3_PIN, HIGH); // Turn on Relay 3
-    Serial.println("Switch 3 pressed: Relay 3 ON");
-  } else {
-    digitalWrite(RELAY_3_PIN, LOW); // Turn off Relay 3
-    Serial.println("Switch 3 released: Relay 3 OFF");
-  }
-
-  if (digitalRead(SWITCH_4_PIN) == LOW) { // Switch 4 pressed (active low)
-    digitalWrite(RELAY_4_PIN, HIGH); // Turn on Relay 4
-    Serial.println("Switch 4 pressed: Relay 4 ON");
-  } else {
-    digitalWrite(RELAY_4_PIN, LOW); // Turn off Relay 4
-    Serial.println("Switch 4 released: Relay 4 OFF");
-  }
-
-  delay(100); // Small delay for stability
+  // Nothing to do here
 }
