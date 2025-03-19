@@ -14,13 +14,19 @@
 #define SWITCH_4_PIN 18
 
 // Hardcoded MAC address of the gateway
-uint8_t gatewayMacAddress[] = {0x34, 0x85, 0x18, 0x17, 0x6B, 0x50};
+uint8_t gatewayMacAddress[] = {0x24, 0x6F, 0x28, 0x01, 0x02, 0x03};
 
 // Structure to receive data
 typedef struct {
   uint8_t relayNumber; // Relay number (1, 2, 3, or 4)
   uint8_t state;       // 0 = OFF, 1 = ON
 } RelayCommand;
+
+// Variables to track the last relay states
+bool relay1State = LOW;
+bool relay2State = LOW;
+bool relay3State = LOW;
+bool relay4State = LOW;
 
 // Callback when data is received
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
@@ -37,19 +43,23 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
     snprintf(logMessage, sizeof(logMessage), "Relay %d set to %s", command.relayNumber, command.state ? "ON" : "OFF");
     Serial.println(logMessage);
 
-    // Control the relay
+    // Update the relay state
     switch (command.relayNumber) {
       case 1:
-        digitalWrite(RELAY_1_PIN, command.state);
+        relay1State = command.state;
+        digitalWrite(RELAY_1_PIN, relay1State);
         break;
       case 2:
-        digitalWrite(RELAY_2_PIN, command.state);
+        relay2State = command.state;
+        digitalWrite(RELAY_2_PIN, relay2State);
         break;
       case 3:
-        digitalWrite(RELAY_3_PIN, command.state);
+        relay3State = command.state;
+        digitalWrite(RELAY_3_PIN, relay3State);
         break;
       case 4:
-        digitalWrite(RELAY_4_PIN, command.state);
+        relay4State = command.state;
+        digitalWrite(RELAY_4_PIN, relay4State);
         break;
       default:
         Serial.println("Invalid relay number!");
@@ -102,29 +112,30 @@ void setup() {
 void loop() {
   // Read switch states and control relays
   if (digitalRead(SWITCH_1_PIN) == LOW) { // Switch 1 pressed (active low)
-    digitalWrite(RELAY_1_PIN, HIGH); // Turn on Relay 1
-  } else {
-    digitalWrite(RELAY_1_PIN, LOW); // Turn off Relay 1
+    relay1State = !relay1State; // Toggle relay state
+    digitalWrite(RELAY_1_PIN, relay1State);
+    delay(500); // Debounce delay
+    while (digitalRead(SWITCH_1_PIN) == LOW); // Wait for switch release
   }
 
   if (digitalRead(SWITCH_2_PIN) == LOW) { // Switch 2 pressed (active low)
-    digitalWrite(RELAY_2_PIN, HIGH); // Turn on Relay 2
-  } else {
-    digitalWrite(RELAY_2_PIN, LOW); // Turn off Relay 2
+    relay2State = !relay2State; // Toggle relay state
+    digitalWrite(RELAY_2_PIN, relay2State);
+    delay(500); // Debounce delay
+    while (digitalRead(SWITCH_2_PIN) == LOW); // Wait for switch release
   }
 
   if (digitalRead(SWITCH_3_PIN) == LOW) { // Switch 3 pressed (active low)
-    digitalWrite(RELAY_3_PIN, HIGH); // Turn on Relay 3
-  } else {
-    digitalWrite(RELAY_3_PIN, LOW); // Turn off Relay 3
+    relay3State = !relay3State; // Toggle relay state
+    digitalWrite(RELAY_3_PIN, relay3State);
+    delay(500); // Debounce delay
+    while (digitalRead(SWITCH_3_PIN) == LOW); // Wait for switch release
   }
 
   if (digitalRead(SWITCH_4_PIN) == LOW) { // Switch 4 pressed (active low)
-    digitalWrite(RELAY_4_PIN, HIGH); // Turn on Relay 4
-  } else {
-    digitalWrite(RELAY_4_PIN, LOW); // Turn off Relay 4
+    relay4State = !relay4State; // Toggle relay state
+    digitalWrite(RELAY_4_PIN, relay4State);
+    delay(500); // Debounce delay
+    while (digitalRead(SWITCH_4_PIN) == LOW); // Wait for switch release
   }
-
-  // Small delay to debounce switches
-  delay(50);
 }
