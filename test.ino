@@ -13,26 +13,17 @@
 #define SWITCH_3_PIN 4
 #define SWITCH_4_PIN 18
 
-// Define debounce delay (in milliseconds)
-#define DEBOUNCE_DELAY 50
-
 // Variables to track the relay states
 bool relay1State = LOW;
 bool relay2State = LOW;
 bool relay3State = LOW;
 bool relay4State = LOW;
 
-// Variables to track the last stable switch states
+// Variables to track the last switch states
 bool lastSwitch1State = HIGH;
 bool lastSwitch2State = HIGH;
 bool lastSwitch3State = HIGH;
 bool lastSwitch4State = HIGH;
-
-// Variables to track the last debounce times
-unsigned long lastDebounceTime1 = 0;
-unsigned long lastDebounceTime2 = 0;
-unsigned long lastDebounceTime3 = 0;
-unsigned long lastDebounceTime4 = 0;
 
 // Structure to receive data
 typedef struct {
@@ -55,22 +46,22 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
     snprintf(logMessage, sizeof(logMessage), "Relay %d set to %s", command.relayNumber, command.state ? "ON" : "OFF");
     Serial.println(logMessage);
 
-    // Directly update the relay state (override any manual control)
+    // Toggle the relay state based on the received command
     switch (command.relayNumber) {
       case 1:
-        relay1State = command.state;
+        relay1State = !relay1State; // Toggle relay state
         digitalWrite(RELAY_1_PIN, relay1State);
         break;
       case 2:
-        relay2State = command.state;
+        relay2State = !relay2State; // Toggle relay state
         digitalWrite(RELAY_2_PIN, relay2State);
         break;
       case 3:
-        relay3State = command.state;
+        relay3State = !relay3State; // Toggle relay state
         digitalWrite(RELAY_3_PIN, relay3State);
         break;
       case 4:
-        relay4State = command.state;
+        relay4State = !relay4State; // Toggle relay state
         digitalWrite(RELAY_4_PIN, relay4State);
         break;
       default:
@@ -121,59 +112,47 @@ void setup() {
 }
 
 void loop() {
-  // Read switch states with debouncing and edge detection
+  // Read switch states and toggle relays on press and release
   bool currentSwitch1State = digitalRead(SWITCH_1_PIN);
   if (currentSwitch1State != lastSwitch1State) {
-    lastDebounceTime1 = millis();
-  }
-  if ((millis() - lastDebounceTime1) > DEBOUNCE_DELAY) {
-    // Check for a falling edge (switch pressed)
-    if (currentSwitch1State == LOW && lastSwitch1State == HIGH) {
+    delay(50); // Simple debounce delay
+    if (currentSwitch1State == LOW || currentSwitch1State == HIGH) { // Toggle on both press and release
       relay1State = !relay1State; // Toggle relay state
       digitalWrite(RELAY_1_PIN, relay1State);
-      Serial.println("Switch 1 pressed: Relay 1 toggled.");
+      Serial.println("Switch 1 toggled: Relay 1 state changed.");
     }
     lastSwitch1State = currentSwitch1State;
   }
 
   bool currentSwitch2State = digitalRead(SWITCH_2_PIN);
   if (currentSwitch2State != lastSwitch2State) {
-    lastDebounceTime2 = millis();
-  }
-  if ((millis() - lastDebounceTime2) > DEBOUNCE_DELAY) {
-    // Check for a falling edge (switch pressed)
-    if (currentSwitch2State == LOW && lastSwitch2State == HIGH) {
+    delay(50); // Simple debounce delay
+    if (currentSwitch2State == LOW || currentSwitch2State == HIGH) { // Toggle on both press and release
       relay2State = !relay2State; // Toggle relay state
       digitalWrite(RELAY_2_PIN, relay2State);
-      Serial.println("Switch 2 pressed: Relay 2 toggled.");
+      Serial.println("Switch 2 toggled: Relay 2 state changed.");
     }
     lastSwitch2State = currentSwitch2State;
   }
 
   bool currentSwitch3State = digitalRead(SWITCH_3_PIN);
   if (currentSwitch3State != lastSwitch3State) {
-    lastDebounceTime3 = millis();
-  }
-  if ((millis() - lastDebounceTime3) > DEBOUNCE_DELAY) {
-    // Check for a falling edge (switch pressed)
-    if (currentSwitch3State == LOW && lastSwitch3State == HIGH) {
+    delay(50); // Simple debounce delay
+    if (currentSwitch3State == LOW || currentSwitch3State == HIGH) { // Toggle on both press and release
       relay3State = !relay3State; // Toggle relay state
       digitalWrite(RELAY_3_PIN, relay3State);
-      Serial.println("Switch 3 pressed: Relay 3 toggled.");
+      Serial.println("Switch 3 toggled: Relay 3 state changed.");
     }
     lastSwitch3State = currentSwitch3State;
   }
 
   bool currentSwitch4State = digitalRead(SWITCH_4_PIN);
   if (currentSwitch4State != lastSwitch4State) {
-    lastDebounceTime4 = millis();
-  }
-  if ((millis() - lastDebounceTime4) > DEBOUNCE_DELAY) {
-    // Check for a falling edge (switch pressed)
-    if (currentSwitch4State == LOW && lastSwitch4State == HIGH) {
+    delay(50); // Simple debounce delay
+    if (currentSwitch4State == LOW || currentSwitch4State == HIGH) { // Toggle on both press and release
       relay4State = !relay4State; // Toggle relay state
       digitalWrite(RELAY_4_PIN, relay4State);
-      Serial.println("Switch 4 pressed: Relay 4 toggled.");
+      Serial.println("Switch 4 toggled: Relay 4 state changed.");
     }
     lastSwitch4State = currentSwitch4State;
   }
