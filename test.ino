@@ -127,46 +127,50 @@ void loop() {
     lastDebounceTime1 = millis();
   }
   if ((millis() - lastDebounceTime1) > DEBOUNCE_DELAY) {
-    if (currentSwitch1State != relay1State) {
-      relay1State = currentSwitch1State == LOW ? HIGH : LOW; // Toggle state
+    // Check for a falling edge (switch pressed)
+    if (currentSwitch1State == LOW && lastSwitch1State == HIGH) {
+      relay1State = !relay1State; // Toggle relay state
       digitalWrite(RELAY_1_PIN, relay1State);
     }
+    lastSwitch1State = currentSwitch1State;
   }
-  lastSwitch1State = currentSwitch1State;
 
   bool currentSwitch2State = digitalRead(SWITCH_2_PIN);
   if (currentSwitch2State != lastSwitch2State) {
     lastDebounceTime2 = millis();
   }
   if ((millis() - lastDebounceTime2) > DEBOUNCE_DELAY) {
-    if (currentSwitch2State != relay2State) {
-      relay2State = currentSwitch2State == LOW ? HIGH : LOW;
+    // Check for a falling edge (switch pressed)
+    if (currentSwitch2State == LOW && lastSwitch2State == HIGH) {
+      relay2State = !relay2State; // Toggle relay state
       digitalWrite(RELAY_2_PIN, relay2State);
     }
+    lastSwitch2State = currentSwitch2State;
   }
-  lastSwitch2State = currentSwitch2State;
 
   bool currentSwitch3State = digitalRead(SWITCH_3_PIN);
   if (currentSwitch3State != lastSwitch3State) {
     lastDebounceTime3 = millis();
   }
   if ((millis() - lastDebounceTime3) > DEBOUNCE_DELAY) {
-    if (currentSwitch3State != relay3State) {
-      relay3State = currentSwitch3State == LOW ? HIGH : LOW;
+    // Check for a falling edge (switch pressed)
+    if (currentSwitch3State == LOW && lastSwitch3State == HIGH) {
+      relay3State = !relay3State; // Toggle relay state
       digitalWrite(RELAY_3_PIN, relay3State);
     }
+    lastSwitch3State = currentSwitch3State;
   }
-  lastSwitch3State = currentSwitch3State;
 
   bool currentSwitch4State = digitalRead(SWITCH_4_PIN);
   if (currentSwitch4State != lastSwitch4State) {
     lastDebounceTime4 = millis();
   }
   if ((millis() - lastDebounceTime4) > DEBOUNCE_DELAY) {
-    if (currentSwitch4State != relay4State) {
-      relay4State = currentSwitch4State == LOW ? HIGH : LOW;
+    // Check for a falling edge (switch pressed)
+    if (currentSwitch4State == LOW && lastSwitch4State == HIGH) {
+      relay4State = !relay4State; // Toggle relay state
       digitalWrite(RELAY_4_PIN, relay4State);
     }
+    lastSwitch4State = currentSwitch4State;
   }
-  lastSwitch4State = currentSwitch4State;
 }
