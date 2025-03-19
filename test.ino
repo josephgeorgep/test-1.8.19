@@ -1,12 +1,3 @@
-Received data from 34:85:18:17:7D:30
-Relay 1 set to OFF
-Switch 1 toggled: Relay 1 state changed.
-Received data from 34:85:18:17:7D:30
-Relay 1 set to ON
-Switch 1 toggled: Relay 1 state changed.
-
-
-
 #include <esp_now.h>
 #include <WiFi.h>
 
@@ -43,6 +34,12 @@ unsigned long lastDebounceTime2 = 0;
 unsigned long lastDebounceTime3 = 0;
 unsigned long lastDebounceTime4 = 0;
 
+// Variables to track the last control source (0 = manual, 1 = ESP-NOW)
+bool relay1ControlSource = 0; // 0 = manual, 1 = ESP-NOW
+bool relay2ControlSource = 0;
+bool relay3ControlSource = 0;
+bool relay4ControlSource = 0;
+
 // Structure to receive data
 typedef struct {
   uint8_t relayNumber; // Relay number (1, 2, 3, or 4)
@@ -64,22 +61,26 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
     snprintf(logMessage, sizeof(logMessage), "Relay %d set to %s", command.relayNumber, command.state ? "ON" : "OFF");
     Serial.println(logMessage);
 
-    // Toggle the relay state based on the received command
+    // Update the relay state and control source
     switch (command.relayNumber) {
       case 1:
-        relay1State = !relay1State; // Toggle relay state
+        relay1State = command.state;
+        relay1ControlSource = 1; // Set control source to ESP-NOW
         digitalWrite(RELAY_1_PIN, relay1State);
         break;
       case 2:
-        relay2State = !relay2State; // Toggle relay state
+        relay2State = command.state;
+        relay2ControlSource = 1; // Set control source to ESP-NOW
         digitalWrite(RELAY_2_PIN, relay2State);
         break;
       case 3:
-        relay3State = !relay3State; // Toggle relay state
+        relay3State = command.state;
+        relay3ControlSource = 1; // Set control source to ESP-NOW
         digitalWrite(RELAY_3_PIN, relay3State);
         break;
       case 4:
-        relay4State = !relay4State; // Toggle relay state
+        relay4State = command.state;
+        relay4ControlSource = 1; // Set control source to ESP-NOW
         digitalWrite(RELAY_4_PIN, relay4State);
         break;
       default:
@@ -137,13 +138,14 @@ void loop() {
   }
   if ((millis() - lastDebounceTime1) > DEBOUNCE_DELAY) {
     // Check if the switch state has changed
-    if (currentSwitch1State != digitalRead(RELAY_1_PIN)) {
+    if (currentSwitch1State == LOW && lastSwitch1State == HIGH) { // Falling edge (switch pressed)
       relay1State = !relay1State; // Toggle relay state
+      relay1ControlSource = 0; // Set control source to manual
       digitalWrite(RELAY_1_PIN, relay1State);
-      Serial.println("Switch 1 toggled: Relay 1 state changed.");
+      Serial.println("Switch 1 pressed: Relay 1 toggled.");
     }
+    lastSwitch1State = currentSwitch1State;
   }
-  lastSwitch1State = currentSwitch1State;
 
   bool currentSwitch2State = digitalRead(SWITCH_2_PIN);
   if (currentSwitch2State != lastSwitch2State) {
@@ -151,13 +153,14 @@ void loop() {
   }
   if ((millis() - lastDebounceTime2) > DEBOUNCE_DELAY) {
     // Check if the switch state has changed
-    if (currentSwitch2State != digitalRead(RELAY_2_PIN)) {
+    if (currentSwitch2State == LOW && lastSwitch2State == HIGH) { // Falling edge (switch pressed)
       relay2State = !relay2State; // Toggle relay state
+      relay2ControlSource = 0; // Set control source to manual
       digitalWrite(RELAY_2_PIN, relay2State);
-      Serial.println("Switch 2 toggled: Relay 2 state changed.");
+      Serial.println("Switch 2 pressed: Relay 2 toggled.");
     }
+    lastSwitch2State = currentSwitch2State;
   }
-  lastSwitch2State = currentSwitch2State;
 
   bool currentSwitch3State = digitalRead(SWITCH_3_PIN);
   if (currentSwitch3State != lastSwitch3State) {
@@ -165,13 +168,14 @@ void loop() {
   }
   if ((millis() - lastDebounceTime3) > DEBOUNCE_DELAY) {
     // Check if the switch state has changed
-    if (currentSwitch3State != digitalRead(RELAY_3_PIN)) {
+    if (currentSwitch3State == LOW && lastSwitch3State == HIGH) { // Falling edge (switch pressed)
       relay3State = !relay3State; // Toggle relay state
+      relay3ControlSource = 0; // Set control source to manual
       digitalWrite(RELAY_3_PIN, relay3State);
-      Serial.println("Switch 3 toggled: Relay 3 state changed.");
+      Serial.println("Switch 3 pressed: Relay 3 toggled.");
     }
+    lastSwitch3State = currentSwitch3State;
   }
-  lastSwitch3State = currentSwitch3State;
 
   bool currentSwitch4State = digitalRead(SWITCH_4_PIN);
   if (currentSwitch4State != lastSwitch4State) {
@@ -179,11 +183,12 @@ void loop() {
   }
   if ((millis() - lastDebounceTime4) > DEBOUNCE_DELAY) {
     // Check if the switch state has changed
-    if (currentSwitch4State != digitalRead(RELAY_4_PIN)) {
+    if (currentSwitch4State == LOW && lastSwitch4State == HIGH) { // Falling edge (switch pressed)
       relay4State = !relay4State; // Toggle relay state
+      relay4ControlSource = 0; // Set control source to manual
       digitalWrite(RELAY_4_PIN, relay4State);
-      Serial.println("Switch 4 toggled: Relay 4 state changed.");
+      Serial.println("Switch 4 pressed: Relay 4 toggled.");
     }
+    lastSwitch4State = currentSwitch4State;
   }
-  lastSwitch4State = currentSwitch4State;
 }
