@@ -1,3 +1,9 @@
+Switch 1 toggled: Relay 1 state changed.
+Switch 2 toggled: Relay 2 state changed.
+Switch 3 toggled: Relay 3 state changed.
+Switch 4 toggled: Relay 4 state changed.
+
+
 #include <esp_now.h>
 #include <WiFi.h>
 
