@@ -14,7 +14,7 @@
 #define SWITCH_4_PIN 18
 
 // Hardcoded MAC address of the gateway
-uint8_t gatewayMacAddress[] = {0x24, 0x6F, 0x28, 0x01, 0x02, 0x03};
+uint8_t gatewayMacAddress[] = {0x34, 0x85, 0x18, 0x17, 0x6B, 0x50};
 
 // Structure to receive data
 typedef struct {
