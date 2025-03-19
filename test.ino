@@ -14,7 +14,7 @@
 #define SWITCH_4_PIN 18
 
 // Hardcoded MAC address of the gateway
-uint8_t gatewayMacAddress[] = {0x34, 0x85, 0x18, 0x17, 0x6B, 0x50};
+uint8_t gatewayMacAddress[] = {0x24, 0x6F, 0x28, 0x01, 0x02, 0x03};
 
 // Structure to receive data
 typedef struct {
@@ -22,11 +22,17 @@ typedef struct {
   uint8_t state;       // 0 = OFF, 1 = ON
 } RelayCommand;
 
-// Variables to track the last relay states
+// Variables to track the relay states
 bool relay1State = LOW;
 bool relay2State = LOW;
 bool relay3State = LOW;
 bool relay4State = LOW;
+
+// Variables to track the last switch states (for debouncing)
+bool lastSwitch1State = HIGH;
+bool lastSwitch2State = HIGH;
+bool lastSwitch3State = HIGH;
+bool lastSwitch4State = HIGH;
 
 // Callback when data is received
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
@@ -110,32 +116,36 @@ void setup() {
 }
 
 void loop() {
-  // Read switch states and control relays
-  if (digitalRead(SWITCH_1_PIN) == LOW) { // Switch 1 pressed (active low)
+  // Read switch states and control relays (with debouncing)
+  bool currentSwitch1State = digitalRead(SWITCH_1_PIN);
+  if (currentSwitch1State == LOW && lastSwitch1State == HIGH) { // Switch 1 pressed (active low)
     relay1State = !relay1State; // Toggle relay state
     digitalWrite(RELAY_1_PIN, relay1State);
-    delay(500); // Debounce delay
-    while (digitalRead(SWITCH_1_PIN) == LOW); // Wait for switch release
+    delay(200); // Debounce delay
   }
+  lastSwitch1State = currentSwitch1State;
 
-  if (digitalRead(SWITCH_2_PIN) == LOW) { // Switch 2 pressed (active low)
+  bool currentSwitch2State = digitalRead(SWITCH_2_PIN);
+  if (currentSwitch2State == LOW && lastSwitch2State == HIGH) { // Switch 2 pressed (active low)
     relay2State = !relay2State; // Toggle relay state
     digitalWrite(RELAY_2_PIN, relay2State);
-    delay(500); // Debounce delay
-    while (digitalRead(SWITCH_2_PIN) == LOW); // Wait for switch release
+    delay(200); // Debounce delay
   }
+  lastSwitch2State = currentSwitch2State;
 
-  if (digitalRead(SWITCH_3_PIN) == LOW) { // Switch 3 pressed (active low)
+  bool currentSwitch3State = digitalRead(SWITCH_3_PIN);
+  if (currentSwitch3State == LOW && lastSwitch3State == HIGH) { // Switch 3 pressed (active low)
     relay3State = !relay3State; // Toggle relay state
     digitalWrite(RELAY_3_PIN, relay3State);
-    delay(500); // Debounce delay
-    while (digitalRead(SWITCH_3_PIN) == LOW); // Wait for switch release
+    delay(200); // Debounce delay
   }
+  lastSwitch3State = currentSwitch3State;
 
-  if (digitalRead(SWITCH_4_PIN) == LOW) { // Switch 4 pressed (active low)
+  bool currentSwitch4State = digitalRead(SWITCH_4_PIN);
+  if (currentSwitch4State == LOW && lastSwitch4State == HIGH) { // Switch 4 pressed (active low)
     relay4State = !relay4State; // Toggle relay state
     digitalWrite(RELAY_4_PIN, relay4State);
-    delay(500); // Debounce delay
-    while (digitalRead(SWITCH_4_PIN) == LOW); // Wait for switch release
+    delay(200); // Debounce delay
   }
+  lastSwitch4State = currentSwitch4State;
 }
