@@ -1,3 +1,12 @@
+Received data from 34:85:18:17:7D:30
+Relay 1 set to OFF
+Switch 1 toggled: Relay 1 state changed.
+Received data from 34:85:18:17:7D:30
+Relay 1 set to ON
+Switch 1 toggled: Relay 1 state changed.
+
+
+
 #include <esp_now.h>
 #include <WiFi.h>
 
