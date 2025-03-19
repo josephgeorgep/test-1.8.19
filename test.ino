@@ -1,19 +1,19 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-// Define relay pins
+// Relay Pins
 #define RELAY_1_PIN 3
 #define RELAY_2_PIN 10
 #define RELAY_3_PIN 19
 #define RELAY_4_PIN 5
 
-// Define switch pins
+// Switch Pins (Using Internal Pull-ups)
 #define SWITCH_1_PIN 2
 #define SWITCH_2_PIN 6
 #define SWITCH_3_PIN 4
 #define SWITCH_4_PIN 18
 
-// Define debounce delay (in milliseconds)
+// Debounce delay
 #define DEBOUNCE_DELAY 50
 
 // Relay states
@@ -22,7 +22,7 @@ bool relay2State = LOW;
 bool relay3State = LOW;
 bool relay4State = LOW;
 
-// Last switch states
+// Last switch states (for edge detection)
 bool lastSwitch1State = HIGH;
 bool lastSwitch2State = HIGH;
 bool lastSwitch3State = HIGH;
@@ -34,10 +34,10 @@ unsigned long lastDebounceTime2 = 0;
 unsigned long lastDebounceTime3 = 0;
 unsigned long lastDebounceTime4 = 0;
 
-// Structure for ESP-NOW data
+// Structure for ESP-NOW commands
 typedef struct {
-  uint8_t relayNumber; // Relay number (1-4)
-  uint8_t state;       // 0 = OFF, 1 = ON
+  uint8_t relayNumber;  // Relay number (1-4)
+  uint8_t state;        // 0 = OFF, 1 = ON
 } RelayCommand;
 
 // ESP-NOW receive callback
@@ -48,6 +48,7 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
 
     Serial.printf("ESP-NOW: Relay %d set to %s\n", command.relayNumber, command.state ? "ON" : "OFF");
 
+    // Update relay state
     switch (command.relayNumber) {
       case 1:
         relay1State = command.state;
@@ -111,15 +112,17 @@ void setup() {
   Serial.println("Relay Controller Ready!");
 }
 
-// Function to handle switch toggling
+// Function to handle switch input and toggle relays
 void handleSwitch(int switchPin, bool &lastSwitchState, unsigned long &lastDebounceTime, bool &relayState, int relayPin) {
   bool currentSwitchState = digitalRead(switchPin);
-  
-  if (currentSwitchState != lastSwitchState) { // Detect state change
+
+  // If the switch state has changed, reset debounce timer
+  if (currentSwitchState != lastSwitchState) {
     lastDebounceTime = millis();
   }
 
-  if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) { // Debounce period
+  // Check after debounce delay
+  if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
     if (currentSwitchState == LOW && lastSwitchState == HIGH) { // Button press detected
       relayState = !relayState; // Toggle relay state
       digitalWrite(relayPin, relayState);
