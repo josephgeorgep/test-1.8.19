@@ -131,6 +131,7 @@ void loop() {
     if (currentSwitch1State == LOW && lastSwitch1State == HIGH) {
       relay1State = !relay1State; // Toggle relay state
       digitalWrite(RELAY_1_PIN, relay1State);
+      Serial.println("Switch 1 pressed: Relay 1 toggled.");
     }
     lastSwitch1State = currentSwitch1State;
   }
@@ -144,6 +145,7 @@ void loop() {
     if (currentSwitch2State == LOW && lastSwitch2State == HIGH) {
       relay2State = !relay2State; // Toggle relay state
       digitalWrite(RELAY_2_PIN, relay2State);
+      Serial.println("Switch 2 pressed: Relay 2 toggled.");
     }
     lastSwitch2State = currentSwitch2State;
   }
@@ -157,6 +159,7 @@ void loop() {
     if (currentSwitch3State == LOW && lastSwitch3State == HIGH) {
       relay3State = !relay3State; // Toggle relay state
       digitalWrite(RELAY_3_PIN, relay3State);
+      Serial.println("Switch 3 pressed: Relay 3 toggled.");
     }
     lastSwitch3State = currentSwitch3State;
   }
@@ -170,6 +173,7 @@ void loop() {
     if (currentSwitch4State == LOW && lastSwitch4State == HIGH) {
       relay4State = !relay4State; // Toggle relay state
       digitalWrite(RELAY_4_PIN, relay4State);
+      Serial.println("Switch 4 pressed: Relay 4 toggled.");
     }
     lastSwitch4State = currentSwitch4State;
   }
