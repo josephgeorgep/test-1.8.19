@@ -13,17 +13,32 @@
 #define SWITCH_3_PIN 4
 #define SWITCH_4_PIN 18
 
-// Structure to receive data
-typedef struct {
-  uint8_t relayNumber; // Relay number (1, 2, 3, or 4)
-  uint8_t state;       // 0 = OFF, 1 = ON
-} RelayCommand;
+// Define debounce delay (in milliseconds)
+#define DEBOUNCE_DELAY 50
 
 // Variables to track the relay states
 bool relay1State = LOW;
 bool relay2State = LOW;
 bool relay3State = LOW;
 bool relay4State = LOW;
+
+// Variables to track the last stable switch states
+bool lastSwitch1State = HIGH;
+bool lastSwitch2State = HIGH;
+bool lastSwitch3State = HIGH;
+bool lastSwitch4State = HIGH;
+
+// Variables to track the last debounce times
+unsigned long lastDebounceTime1 = 0;
+unsigned long lastDebounceTime2 = 0;
+unsigned long lastDebounceTime3 = 0;
+unsigned long lastDebounceTime4 = 0;
+
+// Structure to receive data
+typedef struct {
+  uint8_t relayNumber; // Relay number (1, 2, 3, or 4)
+  uint8_t state;       // 0 = OFF, 1 = ON
+} RelayCommand;
 
 // Callback when data is received
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
@@ -106,44 +121,60 @@ void setup() {
 }
 
 void loop() {
-  // Read switch states and control relays
-  if (digitalRead(SWITCH_1_PIN) == LOW) { // Switch 1 pressed (active low)
-    relay1State = HIGH; // Turn on Relay 1
+  // Read switch states with debouncing
+  bool currentSwitch1State = digitalRead(SWITCH_1_PIN);
+  if (currentSwitch1State != lastSwitch1State) {
+    lastDebounceTime1 = millis();
+  }
+  if ((millis() - lastDebounceTime1) > DEBOUNCE_DELAY) {
+    if (currentSwitch1State == LOW) { // Switch 1 pressed (active low)
+      relay1State = HIGH; // Turn on Relay 1
+    } else {
+      relay1State = LOW; // Turn off Relay 1
+    }
     digitalWrite(RELAY_1_PIN, relay1State);
-    delay(500); // Debounce delay
-    while (digitalRead(SWITCH_1_PIN) == LOW); // Wait for switch release
-  } else {
-    relay1State = LOW; // Turn off Relay 1
-    digitalWrite(RELAY_1_PIN, relay1State);
   }
+  lastSwitch1State = currentSwitch1State;
 
-  if (digitalRead(SWITCH_2_PIN) == LOW) { // Switch 2 pressed (active low)
-    relay2State = HIGH; // Turn on Relay 2
+  bool currentSwitch2State = digitalRead(SWITCH_2_PIN);
+  if (currentSwitch2State != lastSwitch2State) {
+    lastDebounceTime2 = millis();
+  }
+  if ((millis() - lastDebounceTime2) > DEBOUNCE_DELAY) {
+    if (currentSwitch2State == LOW) { // Switch 2 pressed (active low)
+      relay2State = HIGH; // Turn on Relay 2
+    } else {
+      relay2State = LOW; // Turn off Relay 2
+    }
     digitalWrite(RELAY_2_PIN, relay2State);
-    delay(500); // Debounce delay
-    while (digitalRead(SWITCH_2_PIN) == LOW); // Wait for switch release
-  } else {
-    relay2State = LOW; // Turn off Relay 2
-    digitalWrite(RELAY_2_PIN, relay2State);
   }
+  lastSwitch2State = currentSwitch2State;
 
-  if (digitalRead(SWITCH_3_PIN) == LOW) { // Switch 3 pressed (active low)
-    relay3State = HIGH; // Turn on Relay 3
-    digitalWrite(RELAY_3_PIN, relay3State);
-    delay(500); // Debounce delay
-    while (digitalRead(SWITCH_3_PIN) == LOW); // Wait for switch release
-  } else {
-    relay3State = LOW; // Turn off Relay 3
+  bool currentSwitch3State = digitalRead(SWITCH_3_PIN);
+  if (currentSwitch3State != lastSwitch3State) {
+    lastDebounceTime3 = millis();
+  }
+  if ((millis() - lastDebounceTime3) > DEBOUNCE_DELAY) {
+    if (currentSwitch3State == LOW) { // Switch 3 pressed (active low)
+      relay3State = HIGH; // Turn on Relay 3
+    } else {
+      relay3State = LOW; // Turn off Relay 3
+    }
     digitalWrite(RELAY_3_PIN, relay3State);
   }
+  lastSwitch3State = currentSwitch3State;
 
-  if (digitalRead(SWITCH_4_PIN) == LOW) { // Switch 4 pressed (active low)
-    relay4State = HIGH; // Turn on Relay 4
-    digitalWrite(RELAY_4_PIN, relay4State);
-    delay(500); // Debounce delay
-    while (digitalRead(SWITCH_4_PIN) == LOW); // Wait for switch release
-  } else {
-    relay4State = LOW; // Turn off Relay 4
+  bool currentSwitch4State = digitalRead(SWITCH_4_PIN);
+  if (currentSwitch4State != lastSwitch4State) {
+    lastDebounceTime4 = millis();
+  }
+  if ((millis() - lastDebounceTime4) > DEBOUNCE_DELAY) {
+    if (currentSwitch4State == LOW) { // Switch 4 pressed (active low)
+      relay4State = HIGH; // Turn on Relay 4
+    } else {
+      relay4State = LOW; // Turn off Relay 4
+    }
     digitalWrite(RELAY_4_PIN, relay4State);
   }
+  lastSwitch4State = currentSwitch4State;
 }
