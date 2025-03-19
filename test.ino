@@ -1,19 +1,19 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-// Define relay pins
+// Define relay pins (original GPIOs)
 #define RELAY_1_PIN 3
 #define RELAY_2_PIN 10
 #define RELAY_3_PIN 19
 #define RELAY_4_PIN 5
 
-// Define switch pins
+// Define switch pins (original GPIOs)
 #define SWITCH_1_PIN 2
 #define SWITCH_2_PIN 6
 #define SWITCH_3_PIN 4
 #define SWITCH_4_PIN 18
 
-// Define debounce delay (in milliseconds)
+// Define debounce delay
 #define DEBOUNCE_DELAY 50
 
 // Variables to track relay states
@@ -22,22 +22,22 @@ bool relay2State = LOW;
 bool relay3State = LOW;
 bool relay4State = LOW;
 
-// Variables to track last stable switch states
+// Last switch states
 bool lastSwitch1State = HIGH;
 bool lastSwitch2State = HIGH;
 bool lastSwitch3State = HIGH;
 bool lastSwitch4State = HIGH;
 
-// Variables to track last debounce times
+// Last debounce times
 unsigned long lastDebounceTime1 = 0;
 unsigned long lastDebounceTime2 = 0;
 unsigned long lastDebounceTime3 = 0;
 unsigned long lastDebounceTime4 = 0;
 
-// Structure to receive ESP-NOW data
+// ESP-NOW data structure
 typedef struct {
   uint8_t relayNumber;
-  uint8_t state; 
+  uint8_t state; // 0 = OFF, 1 = ON
 } RelayCommand;
 
 // ESP-NOW receive callback
@@ -48,6 +48,7 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
 
     Serial.printf("ESP-NOW: Relay %d set to %s\n", command.relayNumber, command.state ? "ON" : "OFF");
 
+    // Update relay state based on ESP-NOW command
     switch (command.relayNumber) {
       case 1:
         relay1State = command.state;
@@ -74,7 +75,7 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Relay Controller Initializing...");
+  Serial.println("Initializing...");
 
   // Initialize relay pins
   pinMode(RELAY_1_PIN, OUTPUT);
@@ -86,7 +87,7 @@ void setup() {
   digitalWrite(RELAY_3_PIN, LOW);
   digitalWrite(RELAY_4_PIN, LOW);
 
-  // Initialize switch pins
+  // Initialize switch pins with INPUT_PULLUP to ensure stable HIGH when not pressed
   pinMode(SWITCH_1_PIN, INPUT_PULLUP);
   pinMode(SWITCH_2_PIN, INPUT_PULLUP);
   pinMode(SWITCH_3_PIN, INPUT_PULLUP);
@@ -94,7 +95,7 @@ void setup() {
 
   // Initialize WiFi in STA mode
   WiFi.mode(WIFI_STA);
-  Serial.print("Relay Controller MAC: ");
+  Serial.print("Device MAC: ");
   Serial.println(WiFi.macAddress());
 
   // Initialize ESP-NOW
@@ -103,22 +104,24 @@ void setup() {
     return;
   }
 
-  // Register callback for receiving data
+  // Register ESP-NOW receive callback
   esp_now_register_recv_cb(OnDataRecv);
 
-  Serial.println("Relay Controller Ready!");
+  Serial.println("System Ready!");
 }
 
-// Function to handle switch toggling with debounce
+// Function to handle switch toggling
 void handleSwitch(int switchPin, bool &lastSwitchState, unsigned long &lastDebounceTime, bool &relayState, int relayPin) {
   bool currentSwitchState = digitalRead(switchPin);
 
+  // Detect switch state change and reset debounce timer
   if (currentSwitchState != lastSwitchState) {
-    lastDebounceTime = millis(); // Reset debounce timer
+    lastDebounceTime = millis();
   }
 
+  // Apply debounce logic
   if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
-    if (currentSwitchState == LOW && lastSwitchState == HIGH) { // Detect press
+    if (currentSwitchState == LOW && lastSwitchState == HIGH) { // Detect button press (falling edge)
       relayState = !relayState; // Toggle relay state
       digitalWrite(relayPin, relayState);
       Serial.printf("Manual: Relay %d toggled %s\n", relayPin, relayState ? "ON" : "OFF");
