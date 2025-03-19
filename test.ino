@@ -1,9 +1,3 @@
-Switch 1 toggled: Relay 1 state changed.
-Switch 2 toggled: Relay 2 state changed.
-Switch 3 toggled: Relay 3 state changed.
-Switch 4 toggled: Relay 4 state changed.
-
-
 #include <esp_now.h>
 #include <WiFi.h>
 
@@ -134,8 +128,8 @@ void loop() {
   }
   if ((millis() - lastDebounceTime1) > DEBOUNCE_DELAY) {
     // Check if the switch state has changed
-    if (currentSwitch1State != relay1State) {
-      relay1State = currentSwitch1State == LOW ? HIGH : LOW; // Toggle relay state
+    if (currentSwitch1State != digitalRead(RELAY_1_PIN)) {
+      relay1State = !relay1State; // Toggle relay state
       digitalWrite(RELAY_1_PIN, relay1State);
       Serial.println("Switch 1 toggled: Relay 1 state changed.");
     }
@@ -148,8 +142,8 @@ void loop() {
   }
   if ((millis() - lastDebounceTime2) > DEBOUNCE_DELAY) {
     // Check if the switch state has changed
-    if (currentSwitch2State != relay2State) {
-      relay2State = currentSwitch2State == LOW ? HIGH : LOW; // Toggle relay state
+    if (currentSwitch2State != digitalRead(RELAY_2_PIN)) {
+      relay2State = !relay2State; // Toggle relay state
       digitalWrite(RELAY_2_PIN, relay2State);
       Serial.println("Switch 2 toggled: Relay 2 state changed.");
     }
@@ -162,8 +156,8 @@ void loop() {
   }
   if ((millis() - lastDebounceTime3) > DEBOUNCE_DELAY) {
     // Check if the switch state has changed
-    if (currentSwitch3State != relay3State) {
-      relay3State = currentSwitch3State == LOW ? HIGH : LOW; // Toggle relay state
+    if (currentSwitch3State != digitalRead(RELAY_3_PIN)) {
+      relay3State = !relay3State; // Toggle relay state
       digitalWrite(RELAY_3_PIN, relay3State);
       Serial.println("Switch 3 toggled: Relay 3 state changed.");
     }
@@ -176,8 +170,8 @@ void loop() {
   }
   if ((millis() - lastDebounceTime4) > DEBOUNCE_DELAY) {
     // Check if the switch state has changed
-    if (currentSwitch4State != relay4State) {
-      relay4State = currentSwitch4State == LOW ? HIGH : LOW; // Toggle relay state
+    if (currentSwitch4State != digitalRead(RELAY_4_PIN)) {
+      relay4State = !relay4State; // Toggle relay state
       digitalWrite(RELAY_4_PIN, relay4State);
       Serial.println("Switch 4 toggled: Relay 4 state changed.");
     }
