@@ -1,54 +1,61 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-// Define relay pins (original GPIOs)
+// Define relay pins
 #define RELAY_1_PIN 3
 #define RELAY_2_PIN 10
 #define RELAY_3_PIN 19
 #define RELAY_4_PIN 5
 
-// Define switch pins (original GPIOs)
+// Define switch pins
 #define SWITCH_1_PIN 2
 #define SWITCH_2_PIN 6
 #define SWITCH_3_PIN 4
 #define SWITCH_4_PIN 18
 
-// Define debounce delay
+// Define debounce delay (in milliseconds)
 #define DEBOUNCE_DELAY 50
 
-// Variables to track relay states
+// Variables to track the relay states
 bool relay1State = LOW;
 bool relay2State = LOW;
 bool relay3State = LOW;
 bool relay4State = LOW;
 
-// Last switch states
+// Variables to track the last stable switch states
 bool lastSwitch1State = HIGH;
 bool lastSwitch2State = HIGH;
 bool lastSwitch3State = HIGH;
 bool lastSwitch4State = HIGH;
 
-// Last debounce times
+// Variables to track the last debounce times
 unsigned long lastDebounceTime1 = 0;
 unsigned long lastDebounceTime2 = 0;
 unsigned long lastDebounceTime3 = 0;
 unsigned long lastDebounceTime4 = 0;
 
-// ESP-NOW data structure
+// Structure to receive data
 typedef struct {
-  uint8_t relayNumber;
-  uint8_t state; // 0 = OFF, 1 = ON
+  uint8_t relayNumber; // Relay number (1, 2, 3, or 4)
+  uint8_t state;       // 0 = OFF, 1 = ON
 } RelayCommand;
 
-// ESP-NOW receive callback
+// Callback when data is received
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
+  char logMessage[50];
+  snprintf(logMessage, sizeof(logMessage), "Received data from %02X:%02X:%02X:%02X:%02X:%02X",
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  Serial.println(logMessage);
+
   if (len == sizeof(RelayCommand)) {
     RelayCommand command;
     memcpy(&command, incomingData, sizeof(command));
 
-    Serial.printf("ESP-NOW: Relay %d set to %s\n", command.relayNumber, command.state ? "ON" : "OFF");
+    // Log the received command
+    snprintf(logMessage, sizeof(logMessage), "Relay %d set to %s", command.relayNumber, command.state ? "ON" : "OFF");
+    Serial.println(logMessage);
 
-    // Update relay state based on ESP-NOW command
+    // Directly update the relay state (override any manual control)
     switch (command.relayNumber) {
       case 1:
         relay1State = command.state;
@@ -67,15 +74,18 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
         digitalWrite(RELAY_4_PIN, relay4State);
         break;
       default:
-        Serial.println("Invalid relay number received!");
+        Serial.println("Invalid relay number!");
         break;
     }
+  } else {
+    Serial.println("Invalid data length received!");
   }
 }
 
 void setup() {
+  // Initialize Serial for logging
   Serial.begin(115200);
-  Serial.println("Initializing...");
+  Serial.println("Relay Controller Initializing...");
 
   // Initialize relay pins
   pinMode(RELAY_1_PIN, OUTPUT);
@@ -87,7 +97,7 @@ void setup() {
   digitalWrite(RELAY_3_PIN, LOW);
   digitalWrite(RELAY_4_PIN, LOW);
 
-  // Initialize switch pins with INPUT_PULLUP to ensure stable HIGH when not pressed
+  // Initialize switch pins
   pinMode(SWITCH_1_PIN, INPUT_PULLUP);
   pinMode(SWITCH_2_PIN, INPUT_PULLUP);
   pinMode(SWITCH_3_PIN, INPUT_PULLUP);
@@ -95,7 +105,7 @@ void setup() {
 
   // Initialize WiFi in STA mode
   WiFi.mode(WIFI_STA);
-  Serial.print("Device MAC: ");
+  Serial.print("Relay Controller MAC: ");
   Serial.println(WiFi.macAddress());
 
   // Initialize ESP-NOW
@@ -104,36 +114,63 @@ void setup() {
     return;
   }
 
-  // Register ESP-NOW receive callback
+  // Register callback for receiving data
   esp_now_register_recv_cb(OnDataRecv);
 
-  Serial.println("System Ready!");
-}
-
-// Function to handle switch toggling
-void handleSwitch(int switchPin, bool &lastSwitchState, unsigned long &lastDebounceTime, bool &relayState, int relayPin) {
-  bool currentSwitchState = digitalRead(switchPin);
-
-  // Detect switch state change and reset debounce timer
-  if (currentSwitchState != lastSwitchState) {
-    lastDebounceTime = millis();
-  }
-
-  // Apply debounce logic
-  if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
-    if (currentSwitchState == LOW && lastSwitchState == HIGH) { // Detect button press (falling edge)
-      relayState = !relayState; // Toggle relay state
-      digitalWrite(relayPin, relayState);
-      Serial.printf("Manual: Relay %d toggled %s\n", relayPin, relayState ? "ON" : "OFF");
-    }
-  }
-
-  lastSwitchState = currentSwitchState; // Update last state
+  Serial.println("Relay Controller Ready!");
 }
 
 void loop() {
-  handleSwitch(SWITCH_1_PIN, lastSwitch1State, lastDebounceTime1, relay1State, RELAY_1_PIN);
-  handleSwitch(SWITCH_2_PIN, lastSwitch2State, lastDebounceTime2, relay2State, RELAY_2_PIN);
-  handleSwitch(SWITCH_3_PIN, lastSwitch3State, lastDebounceTime3, relay3State, RELAY_3_PIN);
-  handleSwitch(SWITCH_4_PIN, lastSwitch4State, lastDebounceTime4, relay4State, RELAY_4_PIN);
+  // Read switch states with debouncing and edge detection
+  bool currentSwitch1State = digitalRead(SWITCH_1_PIN);
+  if (currentSwitch1State != lastSwitch1State) {
+    lastDebounceTime1 = millis();
+  }
+  if ((millis() - lastDebounceTime1) > DEBOUNCE_DELAY) {
+    // Check for a falling edge (switch pressed)
+    if (currentSwitch1State == LOW && lastSwitch1State == HIGH) {
+      relay1State = !relay1State; // Toggle relay state
+      digitalWrite(RELAY_1_PIN, relay1State);
+    }
+    lastSwitch1State = currentSwitch1State;
+  }
+
+  bool currentSwitch2State = digitalRead(SWITCH_2_PIN);
+  if (currentSwitch2State != lastSwitch2State) {
+    lastDebounceTime2 = millis();
+  }
+  if ((millis() - lastDebounceTime2) > DEBOUNCE_DELAY) {
+    // Check for a falling edge (switch pressed)
+    if (currentSwitch2State == LOW && lastSwitch2State == HIGH) {
+      relay2State = !relay2State; // Toggle relay state
+      digitalWrite(RELAY_2_PIN, relay2State);
+    }
+    lastSwitch2State = currentSwitch2State;
+  }
+
+  bool currentSwitch3State = digitalRead(SWITCH_3_PIN);
+  if (currentSwitch3State != lastSwitch3State) {
+    lastDebounceTime3 = millis();
+  }
+  if ((millis() - lastDebounceTime3) > DEBOUNCE_DELAY) {
+    // Check for a falling edge (switch pressed)
+    if (currentSwitch3State == LOW && lastSwitch3State == HIGH) {
+      relay3State = !relay3State; // Toggle relay state
+      digitalWrite(RELAY_3_PIN, relay3State);
+    }
+    lastSwitch3State = currentSwitch3State;
+  }
+
+  bool currentSwitch4State = digitalRead(SWITCH_4_PIN);
+  if (currentSwitch4State != lastSwitch4State) {
+    lastDebounceTime4 = millis();
+  }
+  if ((millis() - lastDebounceTime4) > DEBOUNCE_DELAY) {
+    // Check for a falling edge (switch pressed)
+    if (currentSwitch4State == LOW && lastSwitch4State == HIGH) {
+      relay4State = !relay4State; // Toggle relay state
+      digitalWrite(RELAY_4_PIN, relay4State);
+    }
+    lastSwitch4State = currentSwitch4State;
+  }
 }
