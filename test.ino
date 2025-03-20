@@ -60,18 +60,22 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
       case 1:
         relay1State = command.state;
         digitalWrite(RELAY_1_PIN, relay1State);
+        Serial.println("Relay 1 state updated via ESP-NOW.");
         break;
       case 2:
         relay2State = command.state;
         digitalWrite(RELAY_2_PIN, relay2State);
+        Serial.println("Relay 2 state updated via ESP-NOW.");
         break;
       case 3:
         relay3State = command.state;
         digitalWrite(RELAY_3_PIN, relay3State);
+        Serial.println("Relay 3 state updated via ESP-NOW.");
         break;
       case 4:
         relay4State = command.state;
         digitalWrite(RELAY_4_PIN, relay4State);
+        Serial.println("Relay 4 state updated via ESP-NOW.");
         break;
       default:
         Serial.println("Invalid relay number!");
@@ -177,4 +181,17 @@ void loop() {
     }
     lastSwitch4State = currentSwitch4State;
   }
+
+  // Debug logs for switch states
+  Serial.print("Switch States: ");
+  Serial.print("S1=");
+  Serial.print(digitalRead(SWITCH_1_PIN));
+  Serial.print(" S2=");
+  Serial.print(digitalRead(SWITCH_2_PIN));
+  Serial.print(" S3=");
+  Serial.print(digitalRead(SWITCH_3_PIN));
+  Serial.print(" S4=");
+  Serial.println(digitalRead(SWITCH_4_PIN));
+
+  delay(100); // Small delay to avoid flooding the Serial Monitor
 }
