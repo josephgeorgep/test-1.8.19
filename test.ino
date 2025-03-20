@@ -22,13 +22,13 @@ bool relay2State = LOW;
 bool relay3State = LOW;
 bool relay4State = LOW;
 
-// Track last switch state
+// Track last switch states
 bool lastSwitch1State = HIGH;
 bool lastSwitch2State = HIGH;
 bool lastSwitch3State = HIGH;
 bool lastSwitch4State = HIGH;
 
-// Track last debounce time
+// Track last debounce times
 unsigned long lastDebounceTime1 = 0;
 unsigned long lastDebounceTime2 = 0;
 unsigned long lastDebounceTime3 = 0;
@@ -79,14 +79,14 @@ void setup() {
   pinMode(RELAY_2_PIN, OUTPUT);
   pinMode(RELAY_3_PIN, OUTPUT);
   pinMode(RELAY_4_PIN, OUTPUT);
-  
+
   // Ensure all relays start OFF
   digitalWrite(RELAY_1_PIN, LOW);
   digitalWrite(RELAY_2_PIN, LOW);
   digitalWrite(RELAY_3_PIN, LOW);
   digitalWrite(RELAY_4_PIN, LOW);
 
-  // Set switch pins as INPUT_PULLUP
+  // Set switch pins as INPUT_PULLUP (extra stability)
   pinMode(SWITCH_1_PIN, INPUT_PULLUP);
   pinMode(SWITCH_2_PIN, INPUT_PULLUP);
   pinMode(SWITCH_3_PIN, INPUT_PULLUP);
@@ -111,15 +111,13 @@ void checkSwitch(int switchPin, bool &lastSwitchState, unsigned long &lastDeboun
     lastDebounceTime = millis();
   }
 
-  if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
-    if (reading == LOW && lastSwitchState == HIGH) { // Button Pressed
-      relayState = !relayState;  // Toggle relay state
-      digitalWrite(relayPin, relayState);
-      Serial.printf("Relay toggled via switch: %d\n", relayPin);
-    }
+  if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY && reading == LOW && lastSwitchState == HIGH) {
+    relayState = !relayState;  // Toggle relay state
+    digitalWrite(relayPin, relayState);
+    Serial.printf("Relay %d toggled via switch\n", relayPin);
   }
   
-  lastSwitchState = reading; // Update last switch state
+  lastSwitchState = reading;
 }
 
 // Main Loop
