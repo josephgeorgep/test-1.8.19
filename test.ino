@@ -131,14 +131,12 @@ void loop() {
     lastDebounceTime1 = millis();
   }
   if ((millis() - lastDebounceTime1) > DEBOUNCE_DELAY) {
-    if (currentSwitch1State != lastSwitch1State) {
-      lastSwitch1State = currentSwitch1State;
-      if (currentSwitch1State == LOW) { // Switch 1 pressed (active low)
-        relay1State = !relay1State; // Toggle Relay 1 state
-        digitalWrite(RELAY_1_PIN, relay1State);
-        Serial.println("Relay 1 state toggled via physical switch.");
-      }
+    if (currentSwitch1State != relay1State) {
+      relay1State = currentSwitch1State;
+      digitalWrite(RELAY_1_PIN, relay1State);
+      Serial.println("Relay 1 state updated via physical switch.");
     }
+    lastSwitch1State = currentSwitch1State;
   }
 
   bool currentSwitch2State = digitalRead(SWITCH_2_PIN);
@@ -146,14 +144,12 @@ void loop() {
     lastDebounceTime2 = millis();
   }
   if ((millis() - lastDebounceTime2) > DEBOUNCE_DELAY) {
-    if (currentSwitch2State != lastSwitch2State) {
-      lastSwitch2State = currentSwitch2State;
-      if (currentSwitch2State == LOW) { // Switch 2 pressed (active low)
-        relay2State = !relay2State; // Toggle Relay 2 state
-        digitalWrite(RELAY_2_PIN, relay2State);
-        Serial.println("Relay 2 state toggled via physical switch.");
-      }
+    if (currentSwitch2State != relay2State) {
+      relay2State = currentSwitch2State;
+      digitalWrite(RELAY_2_PIN, relay2State);
+      Serial.println("Relay 2 state updated via physical switch.");
     }
+    lastSwitch2State = currentSwitch2State;
   }
 
   bool currentSwitch3State = digitalRead(SWITCH_3_PIN);
@@ -161,14 +157,12 @@ void loop() {
     lastDebounceTime3 = millis();
   }
   if ((millis() - lastDebounceTime3) > DEBOUNCE_DELAY) {
-    if (currentSwitch3State != lastSwitch3State) {
-      lastSwitch3State = currentSwitch3State;
-      if (currentSwitch3State == LOW) { // Switch 3 pressed (active low)
-        relay3State = !relay3State; // Toggle Relay 3 state
-        digitalWrite(RELAY_3_PIN, relay3State);
-        Serial.println("Relay 3 state toggled via physical switch.");
-      }
+    if (currentSwitch3State != relay3State) {
+      relay3State = currentSwitch3State;
+      digitalWrite(RELAY_3_PIN, relay3State);
+      Serial.println("Relay 3 state updated via physical switch.");
     }
+    lastSwitch3State = currentSwitch3State;
   }
 
   bool currentSwitch4State = digitalRead(SWITCH_4_PIN);
@@ -176,13 +170,11 @@ void loop() {
     lastDebounceTime4 = millis();
   }
   if ((millis() - lastDebounceTime4) > DEBOUNCE_DELAY) {
-    if (currentSwitch4State != lastSwitch4State) {
-      lastSwitch4State = currentSwitch4State;
-      if (currentSwitch4State == LOW) { // Switch 4 pressed (active low)
-        relay4State = !relay4State; // Toggle Relay 4 state
-        digitalWrite(RELAY_4_PIN, relay4State);
-        Serial.println("Relay 4 state toggled via physical switch.");
-      }
+    if (currentSwitch4State != relay4State) {
+      relay4State = currentSwitch4State;
+      digitalWrite(RELAY_4_PIN, relay4State);
+      Serial.println("Relay 4 state updated via physical switch.");
     }
+    lastSwitch4State = currentSwitch4State;
   }
 }
