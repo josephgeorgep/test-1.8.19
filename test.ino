@@ -13,49 +13,46 @@
 #define SWITCH_3_PIN 4
 #define SWITCH_4_PIN 18
 
-// Define debounce delay
-#define DEBOUNCE_DELAY 50
+#define DEBOUNCE_DELAY 50 // 50ms debounce time
 
-// Variables to track the last debounce times
 unsigned long lastDebounceTime1 = 0;
 unsigned long lastDebounceTime2 = 0;
 unsigned long lastDebounceTime3 = 0;
 unsigned long lastDebounceTime4 = 0;
 
-// Structure to receive data
+bool lastSwitchState1 = HIGH;
+bool lastSwitchState2 = HIGH;
+bool lastSwitchState3 = HIGH;
+bool lastSwitchState4 = HIGH;
+
+// Structure to receive ESPNOW data
 typedef struct {
-  uint8_t relayNumber; // Relay number (1, 2, 3, or 4)
-  uint8_t state;       // 0 = OFF, 1 = ON
+  uint8_t relayNumber;
+  uint8_t state; // 0 = OFF, 1 = ON
 } RelayCommand;
 
-// Callback when data is received
+// ESP-NOW Callback for receiving data
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
   if (len == sizeof(RelayCommand)) {
     RelayCommand command;
     memcpy(&command, incomingData, sizeof(command));
 
-    // Update relay based on received command
+    // Update relay state from ESPNOW command
     switch (command.relayNumber) {
-      case 1:
-        digitalWrite(RELAY_1_PIN, command.state);
-        break;
-      case 2:
-        digitalWrite(RELAY_2_PIN, command.state);
-        break;
-      case 3:
-        digitalWrite(RELAY_3_PIN, command.state);
-        break;
-      case 4:
-        digitalWrite(RELAY_4_PIN, command.state);
-        break;
+      case 1: digitalWrite(RELAY_1_PIN, command.state); break;
+      case 2: digitalWrite(RELAY_2_PIN, command.state); break;
+      case 3: digitalWrite(RELAY_3_PIN, command.state); break;
+      case 4: digitalWrite(RELAY_4_PIN, command.state); break;
     }
+    
     Serial.printf("Relay %d set to %s via ESPNOW\n", command.relayNumber, command.state ? "ON" : "OFF");
   }
 }
 
 void setup() {
   Serial.begin(115200);
-  
+  Serial.println("Starting...");
+
   // Initialize relay pins
   pinMode(RELAY_1_PIN, OUTPUT);
   pinMode(RELAY_2_PIN, OUTPUT);
@@ -72,43 +69,42 @@ void setup() {
   pinMode(SWITCH_3_PIN, INPUT_PULLUP);
   pinMode(SWITCH_4_PIN, INPUT_PULLUP);
 
-  // Initialize WiFi in STA mode
-  WiFi.mode(WIFI_STA);
-  Serial.print("MAC Address: ");
-  Serial.println(WiFi.macAddress());
-
   // Initialize ESP-NOW
+  WiFi.mode(WIFI_STA);
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
   esp_now_register_recv_cb(OnDataRecv);
 
-  Serial.println("Relay Controller Ready!");
+  Serial.println("System Ready!");
 }
 
 void loop() {
-  handleSwitch(SWITCH_1_PIN, RELAY_1_PIN, lastDebounceTime1);
-  handleSwitch(SWITCH_2_PIN, RELAY_2_PIN, lastDebounceTime2);
-  handleSwitch(SWITCH_3_PIN, RELAY_3_PIN, lastDebounceTime3);
-  handleSwitch(SWITCH_4_PIN, RELAY_4_PIN, lastDebounceTime4);
+  handleSwitch(SWITCH_1_PIN, RELAY_1_PIN, lastSwitchState1, lastDebounceTime1);
+  handleSwitch(SWITCH_2_PIN, RELAY_2_PIN, lastSwitchState2, lastDebounceTime2);
+  handleSwitch(SWITCH_3_PIN, RELAY_3_PIN, lastSwitchState3, lastDebounceTime3);
+  handleSwitch(SWITCH_4_PIN, RELAY_4_PIN, lastSwitchState4, lastDebounceTime4);
 }
 
-void handleSwitch(int switchPin, int relayPin, unsigned long &lastDebounceTime) {
-  static bool lastSwitchState = HIGH;  // Default HIGH due to pull-up
+// Function to handle switch inputs and toggle relays independently
+void handleSwitch(int switchPin, int relayPin, bool &lastSwitchState, unsigned long &lastDebounceTime) {
   bool currentSwitchState = digitalRead(switchPin);
-
+  
+  // Check if the switch state changed
   if (currentSwitchState != lastSwitchState) {
     lastDebounceTime = millis();
   }
 
+  // Apply debounce delay
   if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
-    if (currentSwitchState == LOW && lastSwitchState == HIGH) {
-      // Toggle the relay state
+    if (currentSwitchState == LOW && lastSwitchState == HIGH) { 
+      // Read the actual relay state and toggle it
       bool newState = !digitalRead(relayPin);
       digitalWrite(relayPin, newState);
       Serial.printf("Relay on pin %d toggled via switch\n", relayPin);
     }
   }
+  
   lastSwitchState = currentSwitchState;
 }
