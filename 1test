@@ -22,7 +22,7 @@ const int debounceDelay = 50;  // 50ms debounce delay
 bool lastSwitchStates[4] = {1, 1, 1, 1};
 bool currentSwitchStates[4] = {1, 1, 1, 1};
 
-// Structure to receive data
+// Structure to receive ESPNOW data
 typedef struct {
   uint8_t relayNumber;
   uint8_t state;
@@ -38,14 +38,17 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
   RelayCommand command;
   memcpy(&command, incomingData, sizeof(command));
 
+  // Validate relay number (1-4)
   if (command.relayNumber < 1 || command.relayNumber > 4) {
     Serial.println("Invalid relay number!");
     return;
   }
 
-  int relayIndex = command.relayNumber - 1;
-  relayStates[relayIndex] = command.state;
-  digitalWrite(RELAY_1_PIN + relayIndex, relayStates[relayIndex]);
+  int relayIndex = command.relayNumber - 1;  // Correct mapping
+  int relayPins[4] = {RELAY_1_PIN, RELAY_2_PIN, RELAY_3_PIN, RELAY_4_PIN};
+
+  relayStates[relayIndex] = command.state;  // Update state
+  digitalWrite(relayPins[relayIndex], relayStates[relayIndex]);  // Control correct relay
 
   Serial.printf("ESPNOW: Relay %d -> %s\n", command.relayNumber, relayStates[relayIndex] ? "ON" : "OFF");
 }
@@ -54,22 +57,19 @@ void setup() {
   Serial.begin(115200);
 
   // Initialize relay pins
-  pinMode(RELAY_1_PIN, OUTPUT);
-  pinMode(RELAY_2_PIN, OUTPUT);
-  pinMode(RELAY_3_PIN, OUTPUT);
-  pinMode(RELAY_4_PIN, OUTPUT);
-  digitalWrite(RELAY_1_PIN, LOW);
-  digitalWrite(RELAY_2_PIN, LOW);
-  digitalWrite(RELAY_3_PIN, LOW);
-  digitalWrite(RELAY_4_PIN, LOW);
+  int relayPins[4] = {RELAY_1_PIN, RELAY_2_PIN, RELAY_3_PIN, RELAY_4_PIN};
+  for (int i = 0; i < 4; i++) {
+    pinMode(relayPins[i], OUTPUT);
+    digitalWrite(relayPins[i], LOW);
+  }
 
   // Initialize switch pins
-  pinMode(SWITCH_1_PIN, INPUT_PULLUP);
-  pinMode(SWITCH_2_PIN, INPUT_PULLUP);
-  pinMode(SWITCH_3_PIN, INPUT_PULLUP);
-  pinMode(SWITCH_4_PIN, INPUT_PULLUP);
+  int switchPins[4] = {SWITCH_1_PIN, SWITCH_2_PIN, SWITCH_3_PIN, SWITCH_4_PIN};
+  for (int i = 0; i < 4; i++) {
+    pinMode(switchPins[i], INPUT_PULLUP);
+  }
 
-  // Initialize ESP-NOW
+  // Initialize ESPNOW
   WiFi.mode(WIFI_STA);
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
@@ -87,25 +87,20 @@ void loop() {
   for (int i = 0; i < 4; i++) {
     bool reading = digitalRead(switchPins[i]);  // Read current switch state
 
-    // If switch state has changed, reset debounce timer
+    // Debounce logic
     if (reading != currentSwitchStates[i]) {
       lastDebounceTime[i] = millis();
     }
-
-    // If debounce delay has passed and state is stable, process input
     if ((millis() - lastDebounceTime[i]) > debounceDelay) {
-      if (reading != lastSwitchStates[i]) {  // Only act on state change
+      if (reading != lastSwitchStates[i]) {  // Act only on state change
         lastSwitchStates[i] = reading;
-
         if (reading == LOW) {  // Switch pressed (active-low)
           relayStates[i] = !relayStates[i];  // Toggle relay
           digitalWrite(relayPins[i], relayStates[i]);
-
           Serial.printf("Switch %d toggled: Relay %d is now %s\n", i + 1, i + 1, relayStates[i] ? "ON" : "OFF");
         }
       }
     }
-
-    currentSwitchStates[i] = reading;  // Update state
+    currentSwitchStates[i] = reading;
   }
 }
