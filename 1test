@@ -13,6 +13,9 @@
 #define SWITCH_3_PIN 4
 #define SWITCH_4_PIN 18
 
+// Relay states
+bool relayStates[4] = {0, 0, 0, 0};
+
 // Structure to receive data
 typedef struct {
   uint8_t relayNumber; // Relay number (1, 2, 3, or 4)
@@ -25,22 +28,10 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
     RelayCommand command;
     memcpy(&command, incomingData, sizeof(command));
 
-    switch (command.relayNumber) {
-      case 1:
-        digitalWrite(RELAY_1_PIN, command.state);
-        break;
-      case 2:
-        digitalWrite(RELAY_2_PIN, command.state);
-        break;
-      case 3:
-        digitalWrite(RELAY_3_PIN, command.state);
-        break;
-      case 4:
-        digitalWrite(RELAY_4_PIN, command.state);
-        break;
-      default:
-        Serial.println("Invalid relay number!");
-        break;
+    if (command.relayNumber >= 1 && command.relayNumber <= 4) {
+      relayStates[command.relayNumber - 1] = command.state;
+      int relayPins[4] = {RELAY_1_PIN, RELAY_2_PIN, RELAY_3_PIN, RELAY_4_PIN};
+      digitalWrite(relayPins[command.relayNumber - 1], command.state);
     }
   }
 }
@@ -48,19 +39,14 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
 void setup() {
   Serial.begin(115200);
 
-  pinMode(RELAY_1_PIN, OUTPUT);
-  pinMode(RELAY_2_PIN, OUTPUT);
-  pinMode(RELAY_3_PIN, OUTPUT);
-  pinMode(RELAY_4_PIN, OUTPUT);
-  digitalWrite(RELAY_1_PIN, LOW);
-  digitalWrite(RELAY_2_PIN, LOW);
-  digitalWrite(RELAY_3_PIN, LOW);
-  digitalWrite(RELAY_4_PIN, LOW);
+  int relayPins[4] = {RELAY_1_PIN, RELAY_2_PIN, RELAY_3_PIN, RELAY_4_PIN};
+  int switchPins[4] = {SWITCH_1_PIN, SWITCH_2_PIN, SWITCH_3_PIN, SWITCH_4_PIN};
 
-  pinMode(SWITCH_1_PIN, INPUT_PULLUP);
-  pinMode(SWITCH_2_PIN, INPUT_PULLUP);
-  pinMode(SWITCH_3_PIN, INPUT_PULLUP);
-  pinMode(SWITCH_4_PIN, INPUT_PULLUP);
+  for (int i = 0; i < 4; i++) {
+    pinMode(relayPins[i], OUTPUT);
+    digitalWrite(relayPins[i], LOW);
+    pinMode(switchPins[i], INPUT_PULLUP);
+  }
 
   WiFi.mode(WIFI_STA);
   if (esp_now_init() != ESP_OK) {
@@ -71,8 +57,16 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(RELAY_1_PIN, digitalRead(SWITCH_1_PIN));
-  digitalWrite(RELAY_2_PIN, digitalRead(SWITCH_2_PIN));
-  digitalWrite(RELAY_3_PIN, digitalRead(SWITCH_3_PIN));
-  digitalWrite(RELAY_4_PIN, digitalRead(SWITCH_4_PIN));
+  int switchPins[4] = {SWITCH_1_PIN, SWITCH_2_PIN, SWITCH_3_PIN, SWITCH_4_PIN};
+  int relayPins[4] = {RELAY_1_PIN, RELAY_2_PIN, RELAY_3_PIN, RELAY_4_PIN};
+
+  for (int i = 0; i < 4; i++) {
+    if (digitalRead(switchPins[i]) == LOW) {  // Active-low switch
+      relayStates[i] = 1;
+    } else {
+      relayStates[i] = 0;
+    }
+    digitalWrite(relayPins[i], relayStates[i]);
+  }
+  delay(50);  // Small debounce delay
 }
