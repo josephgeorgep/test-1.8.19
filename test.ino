@@ -1,4 +1,6 @@
-#
+#include <esp_now.h>
+#include <WiFi.h>
+
 // Define relay pins
 #define RELAY_1_PIN 3
 #define RELAY_2_PIN 10
