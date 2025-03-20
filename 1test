@@ -20,6 +20,7 @@ bool relayStates[4] = {0, 0, 0, 0};
 unsigned long lastDebounceTime[4] = {0, 0, 0, 0};
 const int debounceDelay = 50;  // 50ms debounce delay
 bool lastSwitchStates[4] = {1, 1, 1, 1};
+bool currentSwitchStates[4] = {1, 1, 1, 1};
 
 // Structure to receive data
 typedef struct {
@@ -27,7 +28,7 @@ typedef struct {
   uint8_t state;
 } RelayCommand;
 
-// Callback when ESPNOW data is received
+// ESPNOW receive callback
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
   if (len != sizeof(RelayCommand)) {
     Serial.println("Invalid ESPNOW data received!");
@@ -84,19 +85,27 @@ void loop() {
   int relayPins[4] = {RELAY_1_PIN, RELAY_2_PIN, RELAY_3_PIN, RELAY_4_PIN};
 
   for (int i = 0; i < 4; i++) {
-    bool currentState = digitalRead(switchPins[i]);
+    bool reading = digitalRead(switchPins[i]);  // Read current switch state
 
-    if (currentState != lastSwitchStates[i]) {  // State change detected
-      lastDebounceTime[i] = millis();  // Reset debounce timer
+    // If switch state has changed, reset debounce timer
+    if (reading != currentSwitchStates[i]) {
+      lastDebounceTime[i] = millis();
     }
 
-    if ((millis() - lastDebounceTime[i]) > debounceDelay) {  // Check if stable
-      if (currentState == LOW && lastSwitchStates[i] == HIGH) {  // Detect press
-        relayStates[i] = !relayStates[i];  // Toggle relay state
-        digitalWrite(relayPins[i], relayStates[i]);
-        Serial.printf("Switch %d toggled: Relay %d is now %s\n", i + 1, i + 1, relayStates[i] ? "ON" : "OFF");
+    // If debounce delay has passed and state is stable, process input
+    if ((millis() - lastDebounceTime[i]) > debounceDelay) {
+      if (reading != lastSwitchStates[i]) {  // Only act on state change
+        lastSwitchStates[i] = reading;
+
+        if (reading == LOW) {  // Switch pressed (active-low)
+          relayStates[i] = !relayStates[i];  // Toggle relay
+          digitalWrite(relayPins[i], relayStates[i]);
+
+          Serial.printf("Switch %d toggled: Relay %d is now %s\n", i + 1, i + 1, relayStates[i] ? "ON" : "OFF");
+        }
       }
-      lastSwitchStates[i] = currentState;
     }
+
+    currentSwitchStates[i] = reading;  // Update state
   }
 }
