@@ -71,8 +71,8 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(RELAY_1_PIN, digitalRead(SWITCH_1_PIN) == LOW ? HIGH : LOW);
-  digitalWrite(RELAY_2_PIN, digitalRead(SWITCH_2_PIN) == LOW ? HIGH : LOW);
-  digitalWrite(RELAY_3_PIN, digitalRead(SWITCH_3_PIN) == LOW ? HIGH : LOW);
-  digitalWrite(RELAY_4_PIN, digitalRead(SWITCH_4_PIN) == LOW ? HIGH : LOW);
+  digitalWrite(RELAY_1_PIN, digitalRead(SWITCH_1_PIN));
+  digitalWrite(RELAY_2_PIN, digitalRead(SWITCH_2_PIN));
+  digitalWrite(RELAY_3_PIN, digitalRead(SWITCH_3_PIN));
+  digitalWrite(RELAY_4_PIN, digitalRead(SWITCH_4_PIN));
 }
